@@ -5,7 +5,6 @@ import pyodbc
 import requests
 import csv
 
-
 from main import connection_string
 
 
@@ -18,6 +17,7 @@ class LoTW:
         lotw_csv.raise_for_status()
         csvio = io.StringIO(lotw_csv.text)
 
+        from main import connection_string
         with pyodbc.connect(connection_string) as conn:
             conn.execute('DELETE FROM lotw_users')
             stmt = "INSERT INTO lotw_users (callsign, date_from) VALUES (?, ?)"
@@ -42,5 +42,6 @@ class LoTW:
 
 
 # LoTW.update_lotw_users()
-print(LoTW.is_lotw_user('EA3IEG'))
-print(LoTW.is_lotw_user('EA3IEGG'))
+# eQSL.update_eqsl_users()
+# print(LoTW.is_lotw_user('EA3IEG'))
+# print(LoTW.is_lotw_user('EA3IEGG'))
