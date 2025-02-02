@@ -1,0 +1,6 @@
+alembic
+pyodbc
+requests
+xmltodict
+
+PyYAML
