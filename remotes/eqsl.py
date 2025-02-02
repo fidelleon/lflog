@@ -27,3 +27,14 @@ class eQSL:
             with conn.cursor() as cursor:
                 cursor.fast_executemany = True
                 cursor.executemany(stmt, data)
+
+    @staticmethod
+    def is_eqsl_user(callsign: str) -> bool:
+        """
+
+        :param callsign: desired callsign
+        :return: whether the user is in the list
+        """
+        with pyodbc.connect(connection_string) as conn:
+            answer = conn.execute('SELECT TOP 1 callsign FROM eqsl_users WHERE callsign = ?', (callsign,)).fetchval()
+            return answer is not None
