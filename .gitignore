@@ -4,4 +4,4 @@
 alembic.ini
 settings.yaml
 __pycache__
-*.pyc
+*pyc
