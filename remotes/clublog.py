@@ -119,11 +119,12 @@ class ClubLog:
                 conn.execute('DELETE FROM [clublog.zone_exceptions]')
                 zone_exceptions = clublog_data['clublog']['zone_exceptions']['zone_exception']
                 data = list()
-                stmt = "INSERT INTO [clublog.invalid] VALUES (?, ?, ?, ?)"
+                stmt = "INSERT INTO [clublog.zone_exceptions] VALUES (?, ?, ?, ?, ?)"
                 for zone_exception in zone_exceptions:
                     to_insert = list()
                     to_insert.append(int(zone_exception.get('@record')))
                     to_insert.append(zone_exception.get('call'))
+                    to_insert.append(int(zone_exception.get('zone', 0)))
                     start = zone_exception.get('start')
                     to_insert.append(datetime.datetime.fromisoformat(start) if start else None)
                     end = zone_exception.get('end')
