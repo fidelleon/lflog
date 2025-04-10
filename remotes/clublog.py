@@ -6,8 +6,21 @@ import logging
 import pyodbc
 import requests
 import xmltodict
+import yaml
 
-from main import clublog, connection_string
+with open('settings.yaml', 'r') as f:
+    settings = yaml.safe_load(f)
+
+
+mssql = settings['db']['mssql']
+clublog = settings['clublog']
+
+SERVER = mssql['server']
+DATABASE = mssql['database']
+USERNAME = mssql['username']
+PASSWORD = mssql['password']
+
+connection_string = f'DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={SERVER};DATABASE={DATABASE};UID={USERNAME};PWD={PASSWORD};TrustServerCertificate=Yes'
 
 
 class ClubLog:
@@ -24,7 +37,6 @@ class ClubLog:
         clublog_data = xmltodict.parse(ungzipped.read().decode('utf8'))
         # data['clublog']['entities']['entity'] is a list
         with pyodbc.connect(connection_string) as conn:
-
             logging.warning('entities')
             conn.execute('DELETE FROM [clublog.entities]')
             entities = clublog_data['clublog']['entities']['entity']
@@ -41,14 +53,14 @@ class ClubLog:
                     to_insert.append(float(entity.get('long', 0)))
                     to_insert.append(float(entity.get('lat', 0)))
                     start = entity.get('start')
-                    to_insert.append(datetime.datetime.fromisoformat(start) if start else None)
+                    to_insert.append(datetime.datetime.fromisoformat(start) if start else datetime.datetime(1900, 1, 1))
                     end = entity.get('end')
-                    to_insert.append(datetime.datetime.fromisoformat(end) if end else None)
+                    to_insert.append(datetime.datetime.fromisoformat(end) if end else datetime.datetime(2100, 1, 1))
                     to_insert.append(entity.get('whitelisted', True))
                     whitelist_start = entity.get('whitelist_start')
-                    to_insert.append(datetime.datetime.fromisoformat(whitelist_start) if whitelist_start else None)
+                    to_insert.append(datetime.datetime.fromisoformat(whitelist_start) if whitelist_start else datetime.datetime(1900, 1, 1))
                     whitelist_end = entity.get('whitelist_end')
-                    to_insert.append(datetime.datetime.fromisoformat(whitelist_end) if whitelist_end else None)
+                    to_insert.append(datetime.datetime.fromisoformat(whitelist_end) if whitelist_end else datetime.datetime(2100, 1, 1))
                     cursor.execute(stmt, to_insert)
 
                 logging.warning('exceptions')
@@ -68,9 +80,9 @@ class ClubLog:
                     to_insert.append(float(exception.get('long', 0)))
                     to_insert.append(float(exception.get('lat', 0)))
                     start = exception.get('start')
-                    to_insert.append(datetime.datetime.fromisoformat(start) if start else None)
+                    to_insert.append(datetime.datetime.fromisoformat(start) if start else datetime.datetime(1900, 1, 1))
                     end = exception.get('end')
-                    to_insert.append(datetime.datetime.fromisoformat(end) if end else None)
+                    to_insert.append(datetime.datetime.fromisoformat(end) if end else datetime.datetime(2100, 1, 1))
                     data.append(to_insert)
                 cursor.fast_executemany = True
                 cursor.executemany(stmt, data)
@@ -91,9 +103,9 @@ class ClubLog:
                     to_insert.append(float(prefix.get('long', 0)))
                     to_insert.append(float(prefix.get('lat', 0)))
                     start = prefix.get('start')
-                    to_insert.append(datetime.datetime.fromisoformat(start) if start else None)
+                    to_insert.append(datetime.datetime.fromisoformat(start) if start else datetime.datetime(1900, 1, 1))
                     end = prefix.get('end')
-                    to_insert.append(datetime.datetime.fromisoformat(end) if end else None)
+                    to_insert.append(datetime.datetime.fromisoformat(end) if end else datetime.datetime(2100, 1, 1))
                     data.append(to_insert)
                 cursor.fast_executemany = True
                 cursor.executemany(stmt, data)
@@ -108,9 +120,9 @@ class ClubLog:
                     to_insert.append(int(invalid.get('@record')))
                     to_insert.append(invalid.get('call'))
                     start = invalid.get('start')
-                    to_insert.append(datetime.datetime.fromisoformat(start) if start else None)
+                    to_insert.append(datetime.datetime.fromisoformat(start) if start else datetime.datetime(1900, 1, 1))
                     end = invalid.get('end')
-                    to_insert.append(datetime.datetime.fromisoformat(end) if end else None)
+                    to_insert.append(datetime.datetime.fromisoformat(end) if end else datetime.datetime(2100, 1, 1))
                     data.append(to_insert)
                 cursor.fast_executemany = True
                 cursor.executemany(stmt, data)
@@ -126,9 +138,19 @@ class ClubLog:
                     to_insert.append(zone_exception.get('call'))
                     to_insert.append(int(zone_exception.get('zone', 0)))
                     start = zone_exception.get('start')
-                    to_insert.append(datetime.datetime.fromisoformat(start) if start else None)
+                    to_insert.append(datetime.datetime.fromisoformat(start) if start else datetime.datetime(1900, 1, 1))
                     end = zone_exception.get('end')
-                    to_insert.append(datetime.datetime.fromisoformat(end) if end else None)
+                    to_insert.append(datetime.datetime.fromisoformat(end) if end else datetime.datetime(2100, 1, 1))
                     data.append(to_insert)
                 cursor.fast_executemany = True
                 cursor.executemany(stmt, data)
+
+    @staticmethod
+    def get_prefixes():
+        with pyodbc.connect(connection_string) as conn:
+            with conn.execute('SELECT * FROM [clublog.prefixes]') as cursor:
+                columns = [column[0] for column in cursor.description]
+                results = []
+                for row in cursor.fetchall():
+                    results.append(dict(zip(columns, row)))
+                return results
